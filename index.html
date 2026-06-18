@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>全局自转球面文字</title>
+<title>独立滑动球面文字</title>
 <style>
 *{margin:0;padding:0}
 body{
@@ -24,30 +24,21 @@ body{
 </head>
 <body>
 <script>
-// ===================== 可视化控制参数（直接修改） =====================
-const MAX_DENSITY = 50;       // 球面最大文字总数，控制整体密度(30~80适中)
-const SPAWN_INTERVAL = 300;   // 新词生成间隔(ms)，数值越大生成越慢
-const WORD_LIFE_FRAME = 4000; // 单个文字完整存活总帧数
-const FADE_STEP = 500;        // 淡入/淡出过渡帧数，越大渐变越柔和
-const SPHERE_RATIO = 0.36;    // 球体大小占屏幕比例
-const GLOBAL_SPIN_SPEED = 0.0008; // 整个球体自转速度，越小转得越慢
-const CAMERA_DIST = 720;      // 相机透视距离，控制球面立体感
-// =====================================================================
+// ===================== 可调参数区 =====================
+const MAX_DENSITY = 48;        // 最大同时存在文字，控制整体密度
+const SPAWN_INTERVAL = 260;    // 新词生成间隔(ms)，越小冒出越快
+const WORD_LIFE_FRAME = 4200;  // 单个文字完整存活总帧数
+const FADE_STEP = 520;         // 淡入淡出柔和过渡帧数
+const SPHERE_RATIO = 0.36;     // 球体大小占屏幕比例
+const GLOBAL_SPIN_SPEED = 0.0006; // 整个球体缓慢自转速度
+const SELF_SLIDE_SPEED = 0.0012;  // 单个文字独立向左上滑动速度
+const CAMERA_DIST = 720;        // 相机透视距离，控制3D立体感
+// ======================================================
 
-// 词汇+对应链接配置
+// 词汇+对应链接
 const wordPool = [
-  { text:"春风", link:"https://www.baidu.com/s?wd=春风" },
-  { text:"落日", link:"https://www.baidu.com/s?wd=落日" },
-  { text:"云端", link:"https://www.baidu.com/s?wd=云端" },
-  { text:"归途", link:"https://www.baidu.com/s?wd=归途" },
-  { text:"初心", link:"https://www.baidu.com/s?wd=初心" },
-  { text:"山河", link:"https://www.baidu.com/s?wd=山河" },
-  { text:"星辰", link:"https://www.baidu.com/s?wd=星辰" },
-  { text:"旷野", link:"https://www.baidu.com/s?wd=旷野" },
-  { text:"人间", link:"https://www.baidu.com/s?wd=人间" },
-  { text:"烟火", link:"https://www.baidu.com/s?wd=烟火" },
-  { text:"破晓", link:"https://www.baidu.com/s?wd=破晓" },
-  { text:"远航", link:"https://www.baidu.com/s?wd=远航" },
+  { text:"工作日记", link:"https://app.notion.com/p/6-17-382a880a940580bc8c6ee630e35ddb4c?source=copy_link" },
+  { text:"数据库", link:"https://app.notion.com/p/354a880a940580b78ed8e56e47c3e021?v=354a880a9405803cbfc1000c89de1def&source=copy_link" },
 ];
 
 let winW = window.innerWidth;
@@ -56,15 +47,14 @@ let sphereRadius = Math.min(winW, winH) * SPHERE_RATIO;
 let centerX = winW / 2;
 let centerY = winH / 2;
 
-let isHoverPause = false; // 鼠标悬浮暂停全局自转
-let globalRotateTheta = 0; // 球体全局旋转角度（控制整体左转）
+let isHoverPause = false;
+let globalRotateTheta = 0;
 const wordList = [];
 
 class SphereWord {
   constructor(){
     this.el = document.createElement("div");
     this.el.className = "word-item";
-    // 随机词语与链接
     const item = wordPool[Math.floor(Math.random() * wordPool.length)];
     const a = document.createElement("a");
     a.innerText = item.text;
@@ -72,11 +62,11 @@ class SphereWord {
     a.target = "_blank";
     this.el.appendChild(a);
 
-    // 文字固定球面初始坐标（不独立漂移，只跟随全局球体旋转）
+    // 文字初始球面坐标
     this.baseTheta = Math.random() * Math.PI * 2;
     this.basePhi = Math.random() * Math.PI;
 
-    // 文字随机大小、适配透明背景深色文字
+    // 文字样式
     this.fontSize = 13 + Math.random() * 20;
     const r = 20 + Math.floor(Math.random() * 110);
     const g = 50 + Math.floor(Math.random() * 120);
@@ -90,10 +80,14 @@ class SphereWord {
 
   update(){
     this.life += 1;
-    // 合并全局旋转角度，实现整体球体转动
+    if(isHoverPause) return;
+
+    // 核心：文字自身持续向左上方球面滑动（theta持续递增=向左环绕）
+    this.baseTheta += SELF_SLIDE_SPEED;
+    // 叠加整个球体全局缓慢自转
     const totalTheta = this.baseTheta + globalRotateTheta;
 
-    // 标准球面坐标计算，严格贴合球体曲面
+    // 球面坐标计算，严格贴合球体曲面
     const x = sphereRadius * Math.sin(this.basePhi) * Math.cos(totalTheta);
     const y = sphereRadius * Math.cos(this.basePhi);
     const z = sphereRadius * Math.sin(this.basePhi) * Math.sin(totalTheta);
@@ -104,7 +98,7 @@ class SphereWord {
     const screenY = centerY + y * perspectiveScale;
     const depthScale = Math.max(0.3, perspectiveScale);
 
-    // 淡入、常显、淡出三段透明度
+    // 淡入→常显→淡出完整透明度
     let opacity = 1;
     if(this.life < FADE_STEP){
       opacity = this.life / FADE_STEP;
@@ -112,11 +106,10 @@ class SphereWord {
       opacity = (WORD_LIFE_FRAME - this.life) / FADE_STEP;
     }
 
-    // 渲染位置、缩放、透明度
     this.el.style.transform = `translate(${screenX}px,${screenY}px) scale(${depthScale})`;
     this.el.style.opacity = opacity;
 
-    // 仅球体可视范围内允许点击
+    // 球体区域内才可点击
     const distFromCenter = Math.hypot(screenX - centerX, screenY - centerY);
     const sphereViewRange = sphereRadius * 1.25;
     this.el.style.pointerEvents = distFromCenter < sphereViewRange ? "auto" : "none";
@@ -127,14 +120,14 @@ class SphereWord {
   }
 }
 
-// 生成新词逻辑：达到密度上限不再新增
+// 新词生成，到达密度上限停止新增
 function spawnNewWord(){
   if(wordList.length >= MAX_DENSITY) return;
   wordList.push(new SphereWord());
 }
 setInterval(spawnNewWord, SPAWN_INTERVAL);
 
-// 鼠标监听：进入球体区域暂停整体自转
+// 鼠标移入球体暂停全部运动
 document.addEventListener("mousemove", (e) => {
   const mouseDist = Math.hypot(e.clientX - centerX, e.clientY - centerY);
   isHoverPause = mouseDist < sphereRadius * 1.25;
@@ -142,12 +135,12 @@ document.addEventListener("mousemove", (e) => {
 
 // 主渲染循环
 function renderLoop(){
-  // 未悬浮时，球体持续向左后方旋转
+  // 全局球体自转
   if(!isHoverPause){
     globalRotateTheta += GLOBAL_SPIN_SPEED;
   }
 
-  // 倒序遍历，安全删除生命周期结束的文字
+  // 遍历更新所有文字，生命周期结束销毁
   for(let i = wordList.length - 1; i >= 0; i--){
     const word = wordList[i];
     word.update();
@@ -160,7 +153,7 @@ function renderLoop(){
 }
 renderLoop();
 
-// 窗口尺寸自适应重置球体参数
+// 窗口自适应
 window.addEventListener("resize", () => {
   winW = window.innerWidth;
   winH = window.innerHeight;
