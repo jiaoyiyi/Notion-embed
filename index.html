@@ -25,11 +25,11 @@ body{
 <body>
 <script>
 // ===================== 可调参数区 =====================
-const MAX_DENSITY = 48;        // 最大同时存在文字，控制整体密度
+const MAX_DENSITY = 36;        // 最大同时存在文字，控制整体密度
 const SPAWN_INTERVAL = 260;    // 新词生成间隔(ms)，越小冒出越快
-const WORD_LIFE_FRAME = 4200;  // 单个文字完整存活总帧数
+const WORD_LIFE_FRAME = 2400;  // 单个文字完整存活总帧数
 const FADE_STEP = 520;         // 淡入淡出柔和过渡帧数
-const SPHERE_RATIO = 0.36;     // 球体大小占屏幕比例
+const SPHERE_RATIO = 0.5;     // 球体大小占屏幕比例
 const GLOBAL_SPIN_SPEED = 0.0006; // 整个球体缓慢自转速度
 const SELF_SLIDE_SPEED = 0.0012;  // 单个文字独立向左上滑动速度
 const CAMERA_DIST = 720;        // 相机透视距离，控制3D立体感
@@ -37,8 +37,9 @@ const CAMERA_DIST = 720;        // 相机透视距离，控制3D立体感
 
 // 词汇+对应链接
 const wordPool = [
-  { text:"工作日记", link:"https://app.notion.com/p/6-17-382a880a940580bc8c6ee630e35ddb4c?source=copy_link" },
-  { text:"数据库", link:"https://app.notion.com/p/354a880a940580b78ed8e56e47c3e021?v=354a880a9405803cbfc1000c89de1def&source=copy_link" },
+  { text:"《邦达113》录入工作", link:"https://app.notion.com/p/342a880a940580b597b1f8eaf68b5db7?v=342a880a9405802db599000ca1362f8e&source=copy_link" },
+  { text:"《强基真题》录入工作", link:"https://app.notion.com/p/226a880a940580279cd2c2036e19cb0f?v=226a880a9405801c9031000ced2ef812&source=copy_link" },
+  { text:"《竞赛真题》录入工作", link:"https://app.notion.com/p/23aa880a940580a5b3ffcc77e5be7100?v=23aa880a940580a6b4ee000c2ce0f9f8&source=copy_link" },
 ];
 
 let winW = window.innerWidth;
