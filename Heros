@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Icon Field</title>
+  <style>
+    html, body { height: 100%; margin: 0; }
+    body { overflow: hidden; background: #0b1020; }
+    .stage { position: relative; width: 100vw; height: 100vh; }
+
+    .icon {
+      position: absolute;
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: grid; place-items: center;
+      cursor: pointer;
+      user-select: none;
+      background: rgba(255,255,255,0.08);
+      backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.12);
+      transition: transform .12s ease;
+    }
+    .icon:hover { transform: scale(1.08); }
+    .icon img { width: 26px; height: 26px; }
+    .icon .emoji { font-size: 22px; }
+  </style>
+</head>
+<body>
+  <div class="stage" id="stage"></div>
+
+  <script>
+    // 1) 在这里配置你的图标和链接
+    // icon: 可以用 emoji（emoji 字段），也可以用图片（img 字段）
+    const items = [
+      { emoji: "📘", url: "https://www.notion.so/" },
+      { emoji: "🧠", url: "https://www.notion.so/" },
+      { emoji: "✅", url: "https://www.notion.so/" },
+      // { img: "https://example.com/icon.png", url: "https://..." },
+    ];
+
+    const COUNT = 40;         // 图标数量
+    const SPEED = 0.25;       // 漂移速度（越大越快）
+    const stage = document.getElementById("stage");
+
+    const icons = [];
+    const rand = (min, max) => Math.random() * (max - min) + min;
+
+    function createIcon() {
+      const data = items[Math.floor(Math.random() * items.length)];
+      const el = document.createElement("div");
+      el.className = "icon";
+
+      if (data.img) {
+        const img = document.createElement("img");
+        img.src = data.img;
+        img.alt = "";
+        el.appendChild(img);
+      } else {
+        const span = document.createElement("span");
+        span.className = "emoji";
+        span.textContent = data.emoji ?? "⭐";
+        el.appendChild(span);
+      }
+
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.open(data.url, "_blank", "noopener,noreferrer");
+      });
+
+      // 初始随机位置
+      const w = 44, h = 44;
+      const state = {
+        el,
+        x: rand(0, window.innerWidth - w),
+        y: rand(0, window.innerHeight - h),
+        vx: rand(-1, 1) * SPEED,
+        vy: rand(-1, 1) * SPEED,
+        w, h
+      };
+
+      el.style.left = state.x + "px";
+      el.style.top  = state.y + "px";
+
+      stage.appendChild(el);
+      icons.push(state);
+    }
+
+    // 生成图标
+    for (let i = 0; i < COUNT; i++) createIcon();
+
+    // 动画：轻微漂移 + 边界反弹
+    function tick() {
+      const W = window.innerWidth;
+      const H = window.innerHeight;
+
+      for (const it of icons) {
+        it.x += it.vx;
+        it.y += it.vy;
+
+        if (it.x < 0 || it.x > W - it.w) it.vx *= -1;
+        if (it.y < 0 || it.y > H - it.h) it.vy *= -1;
+
+        it.x = Math.max(0, Math.min(W - it.w, it.x));
+        it.y = Math.max(0, Math.min(H - it.h, it.y));
+
+        it.el.style.left = it.x + "px";
+        it.el.style.top  = it.y + "px";
+      }
+      requestAnimationFrame(tick);
+    }
+    tick();
+
+    // 窗口尺寸变化时，确保不出界
+    window.addEventListener("resize", () => {});
+  </script>
+</body>
+</html>
